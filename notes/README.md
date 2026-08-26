@@ -3,7 +3,7 @@
 已读的五篇，按它们**互相接手**的顺序整理。
 每一节的结构都是：*上一篇留下什么缺口 → 这篇怎么补 → 它自己又留下什么*。
 
-| # | 论文 | 一句话 | 连结 |
+| # | 论文 | 总结 | 链接 |
 |---|---|---|---|
 | 1 | Ng & Russell, ICML 2000 | 写下“专家最优”的线性不等式，发现解不唯一 | [ACM DL](https://dl.acm.org/doi/10.5555/645529.657801) |
 | 2 | Abbeel & Ng, ICML 2004 | 不解 reward，改匹配 feature expectation | [Stanford 项目页](http://ai.stanford.edu/~pabbeel/irl/) |

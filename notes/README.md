@@ -23,7 +23,7 @@
 | 转移矩阵 | $P_a\in\mathbb R^{\lvert S\rvert\times\lvert S\rvert}$，$(P_a)_{ss'}=P(s'\mid s,a)$ | Ng & Russell 用 $\mathbf P_a$ |
 | 特征 | $\phi(s)\in\mathbb R^k$ | Abbeel & Ng 用 $\phi$，Ziebart 用 $\mathbf f_s$ |
 | 轨迹 | $\tau=(s_0,a_0,s_1,\dots)$ | 一致 |
-| 轨迹特征计数 | $f(\tau)=\sum_t\gamma^t\phi(s_t)$ | Ziebart 用 $\mathbf f_\tau$ |
+| 轨迹特征计数 | $f(\tau)=\sum_t\gamma^t\phi(s_t)$ | Ziebart 用 $\mathbf f_\tau$。**注意**：2004 带折扣 $\gamma^t$；2008 是有限视界**无折扣**的 $\sum_{s_t\in\tau}\phi(s_t)$（论文 eq. 1），下文 §3 用的即是后者 |
 | 特征期望 | $\mu(\pi)=\mathbb E_\pi[f(\tau)]$ | Abbeel & Ng 的核心量 |
 | 示范的经验特征 | $\tilde f=\frac1m\sum_{i=1}^m f(\tau_i)$ | Ziebart 用 $\tilde{\mathbf f}$ |
 | reward 参数 | $\theta$ | 2000 直接用 $R$；2004 用 $w$；2016 用 **cost** $c_\theta$（符号相反） |
@@ -111,8 +111,12 @@ $\tilde\pi$ 在**所有**线性 reward 下都不比专家差过 $\epsilon$。
 
 $$\hat\mu_E=\frac1m\sum_{i=1}^m\sum_{t=0}^{H}\gamma^t\phi\big(s_t^{(i)}\big)$$
 
-样本复杂度是 $m=O\!\big(\tfrac{k}{(\epsilon(1-\gamma))^2}\log\tfrac k\delta\big)$ 的量级
-（每个座标 Chernoff + 对 $k$ 个座标 union bound）。**依赖 $k$ 而不是 $\lvert S\rvert$**——
+样本复杂度（Thm 2，论文 eq. 19 的精确形式）：
+
+$$m\ \ge\ \frac{2k}{(\epsilon(1-\gamma))^2}\,\log\frac{2k}{\delta}$$
+
+（对每个座标用 Hoeffding：$(1-\gamma)\hat\mu_i\in[0,1]$，再对 $k$ 个座标 union bound。）
+**依赖 $k$ 而不是 $\lvert S\rvert$**——
 这是它能离开 tabular 的原因。
 
 ### 2.2 max-margin 版：$w$ 就是分离方向
@@ -149,7 +153,14 @@ $$w^{(i+1)}=\mu_E-\bar\mu^{(i)},\qquad t^{(i+1)}=\big\lVert\mu_E-\bar\mu^{(i)}\b
 所以间隔以 $t^{(i)}=O(1/\sqrt i)$ 的速率下降，
 迭代次数 $n=O\!\big(\tfrac{k}{(1-\gamma)^2\epsilon^2}\log\tfrac{k}{(1-\gamma)\epsilon}\big)$。
 
-> ⚠️ 上面两个 bound 的**确切常数我没抄**，回去核对论文 Thm 1 / Thm 2 再补。
+已对照论文核实（2026-08-28，对照 `paper/基础文献/2004_Abbeel_Apprenticeship_Learning.pdf`）：
+
+$$\text{Thm 1:}\quad n=O\!\left(\frac{k}{(1-\gamma)^2\epsilon^2}\,\log\frac{k}{(1-\gamma)\epsilon}\right)
+\qquad\text{Thm 2:}\quad m\ \ge\ \frac{2k}{(\epsilon(1-\gamma))^2}\,\log\frac{2k}{\delta}$$
+
+论文还给了一条容错结果：若真实 reward 不在 $\phi$ 的张成里、残差为 $\varepsilon(s)$，
+性能退化以 $\lVert\varepsilon\rVert$ 的量级优雅衰减（graceful degradation），
+这正是 §2.5 缺口 (d) 的定量版本。
 
 ### 2.4 为什么输出是混合策略
 
@@ -228,10 +239,13 @@ $$\nabla^2_\theta L=-\operatorname{Cov}_{P_\theta}\big[f(\tau)\big]\ \preceq\ 0$
 
 贵的是 $\mathbb E_{P_\theta}[f]$。论文用一组 backward–forward 递推：
 
-**backward（算局部 partition）**，$t$ 从终点往回：
+**backward（算局部 partition）**。论文原文：初始化 $Z_{s}=1$（对所有状态），迭代 $N$ 次
 
 $$Z_{s,a}\ \leftarrow\ \sum_{s'}P(s'\mid s,a)\ e^{\theta^\top\phi(s)}\ Z_{s'},
-\qquad Z_s\ \leftarrow\ \sum_a Z_{s,a}\ \big(+\,\mathbb 1[s\ \text{terminal}]\big)$$
+\qquad Z_s\ \leftarrow\ \sum_a Z_{s,a}$$
+
+（很多课程讲义写成“只在 terminal 状态置 1”的吸收态变体；论文本身是全 1 初始化 + 固定 $N$ 次迭代，
+两者在有吸收目标、视界足够长时一致。）
 
 **局部动作概率**：
 
@@ -242,6 +256,12 @@ $$\pi_\theta(a\mid s)=\frac{Z_{s,a}}{Z_s}$$
 $$D_{s,0}=d_0(s),\qquad
 D_{s',t+1}=\sum_{s}\sum_a D_{s,t}\ \pi_\theta(a\mid s)\ P(s'\mid s,a),\qquad
 D_s=\sum_{t=0}^{H}D_{s,t}$$
+
+> ⚠️ **论文原文的 forward pass 印刷有误**（AAAI 2008 版 Algorithm 1 第 5 步）：
+> $D_{s_i,t+1}=\sum_{a_{i,j}}\sum_k D_{s_k,t}P(a_{i,j}\mid s_i)P(s_k\mid a_{i,j},s_i)$ ——
+> 下标 $i,k$ 自相矛盾（右边是从 $s_i$ 出发的转移，却用来更新 $s_i$ 自己）。
+> 上面写的是守恒的正确版本；实现时用 $\sum_s D_{s,t}=1$（每步）或 $\sum_s D_s=H$ 当检查，
+> 这条守恒律恰好就能抓出这类下标错误。
 
 ### 3.4 概念上的跃迁
 
@@ -390,7 +410,15 @@ $$\min_q\ \ \mathbb E_q\big[c_\theta(\tau)\big]-\mathcal H(q)$$
 
   因为训练早期的 $q$ 几乎覆盖不到示范所在的区域，纯 $q$ 会让权重爆炸。
 
-- cost 是神经网络 → 必须加正则（论文用 lcr、单调性等），否则会退化成无意义的解。
+- cost 是神经网络 → 必须加正则，否则会退化成无意义的解。论文 §5 的两个正则项（对轨迹 $\tau$ 上的状态 $x_t$）：
+
+  $$g_{\text{lcr}}(\tau)=\sum_{x_t\in\tau}\big[(c_\theta(x_{t+1})-c_\theta(x_t))-(c_\theta(x_t)-c_\theta(x_{t-1}))\big]^2$$
+
+  惩罚 cost 的二阶时间差分（“局部匀速”），通用；
+
+  $$g_{\text{mono}}(\tau)=\sum_{x_t\in\tau}\big[\max\big(0,\ c_\theta(x_t)-c_\theta(x_{t-1})-1\big)\big]^2$$
+
+  squared hinge，要求示范的 cost 随时间单调下降，只适用于“到达目标”类的 episodic 任务。
 
 ### 5.5 留下的缺口 / 接下来
 
@@ -431,11 +459,16 @@ $$\boxed{\ \nabla_\theta=\underbrace{\tilde f}_{\text{demo}}\ -\ \underbrace{\ma
 
 ## 8. 待办
 
-**回去核对**
+**回去核对**（2026-08-28 已对照 `paper/基础文献/` 的 PDF 核完）
 
-- [ ] Abbeel & Ng 的两个 bound（$t^{(i)}$ 的衰减率、迭代次数）确切常数 → 论文 Thm 1 / Thm 2
-- [ ] Ziebart 2010 从最大因果熵推到 soft Bellman 的完整拉格朗日推导（这里只写了结论）
-- [ ] Finn 2016 的正则项（lcr、单调性）具体形式
+- [x] Abbeel & Ng 的两个 bound 确切常数 → 已补进 §2.3
+- [x] Finn 2016 的正则项（lcr、单调性）具体形式 → 已补进 §5.4
+- [x] Ziebart 2010 的证明结构：原文 Thm（eq. 5–6）是“凸原问题 + 拉格朗日 + 强对偶”，
+      对 $P(A\|S)$ 求导置零得 $P_\theta(A_t\mid S_t)\propto\exp\{\theta^\top\mathbb E[F]-\sum_{\tau>t}\mathbb E[\log P_\theta]\}$，
+      再代入递归式验证。完整的逐步推导仍值得自己手写一遍：
+- [ ] 手推 Ziebart 2010 eq. 4 → eq. 5 的完整拉格朗日（读懂证明骨架 ≠ 自己推得出来）
+- [ ] 发现的新问题：AAAI 2008 原文 Algorithm 1 forward pass 的下标印刷有误（见 §3.3）——
+      去查一下 Ziebart 2010 博士论文里的版本是否已修正
 
 **五篇留下的、还没读到答案的**
 

@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IRL 五篇精读</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#FAFAF8; --ink:#1F2933; --muted:#5B6B68;
+  --accent:#0F766E; --accent-ink:#0B5E58; --warn:#B45309; --warn-bg:#FBF4EA;
+  --line:#D9E2E0; --quote-bg:#EEF4F2; --code-bg:#ECF0EF;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#101715; --ink:#E6EBE9; --muted:#8AA19C;
+    --accent:#3AB5A8; --accent-ink:#5BCCC0; --warn:#E0A458; --warn-bg:#221B12;
+    --line:#24312E; --quote-bg:#16201D; --code-bg:#1B2523;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:15.5px;line-height:1.9;-webkit-font-smoothing:antialiased}
+main{max-width:42em;margin:0 auto;padding:2.5rem 1.25rem 6rem}
+header.doc{border-bottom:1px solid var(--line);padding-bottom:1.5rem;margin-bottom:1.5rem}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;color:var(--accent);font-weight:700;text-transform:uppercase}
+h1{font-family:"Noto Serif SC",serif;font-weight:700;font-size:1.55rem;line-height:1.5;margin:.4rem 0 .3rem;text-wrap:balance}
+.meta{color:var(--muted);font-size:.85rem}
+nav.toc{display:flex;flex-wrap:wrap;gap:.35rem .9rem;padding:.9rem 0 1.4rem;border-bottom:1px solid var(--line);margin-bottom:1rem}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem}
+nav.toc a:hover{color:var(--accent)}
+h2{font-family:"Noto Serif SC",serif;font-weight:700;font-size:1.22rem;line-height:1.55;
+  margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line);text-wrap:balance}
+h3{font-family:"Noto Serif SC",serif;font-weight:600;font-size:1.02rem;margin:1.9em 0 .4em}
+a{color:var(--accent-ink);text-decoration-thickness:1px;text-underline-offset:3px}
+hr{border:0;border-top:1px solid var(--line);margin:2.4em 0}
+blockquote{margin:1.3em 0;padding:.7em 1.1em;background:var(--quote-bg);
+  border-left:3px solid var(--accent);border-radius:0 6px 6px 0}
+blockquote p{margin:.3em 0}
+blockquote.warn{background:var(--warn-bg);border-left-color:var(--warn)}
+code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.86em;
+  background:var(--code-bg);padding:.12em .38em;border-radius:4px}
+pre{background:var(--code-bg);padding:.9em 1.1em;border-radius:8px;overflow-x:auto;line-height:1.65}
+pre code{background:none;padding:0}
+.tw{overflow-x:auto;margin:1.3em 0}
+table{border-collapse:collapse;font-size:.88rem;line-height:1.7;min-width:100%}
+th{font-weight:700;text-align:left;border-bottom:2px solid var(--line);padding:.45em .8em .45em 0;white-space:nowrap}
+td{border-bottom:1px solid var(--line);padding:.5em .8em .5em 0;vertical-align:top}
+mjx-container[display="true"]{display:block;overflow-x:auto;overflow-y:hidden;padding:.35em 0;margin:.9em 0}
+li{margin:.3em 0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+</head>
+<body>
+<main>
+<header class="doc">
+  <div class="eyebrow">irl-learning-notes / notes</div>
+  <h1>五篇论文的一条线：从“反推 reward”到“学一个轨迹分布”</h1>
+  <div class="meta">由 <code>build_html.py</code> 从 <code>README.md</code> 生成 —— 改笔记后重跑一次即可同步</div>
+</header>
+<nav class="toc"><a href="#s0">0. 统一符号</a>
+<a href="#s1">1. Ng &amp; Russell (2000)：得到的是一个锥，不是一个解</a>
+<a href="#s2">2. Abbeel &amp; Ng (2004)：把目标从 reward 换成 …</a>
+<a href="#s3">3. Ziebart et al. (2008)：从“挑一个策略”到“学一个分布”</a>
+<a href="#s4">4. Ziebart, Bagnell &amp; Dey (2010)：因果熵</a>
+<a href="#s5">5. Finn, Levine &amp; Abbeel (2016)：采样近似 …</a>
+<a href="#s6">6. 贯穿五篇的那一个梯度</a>
+<a href="#s7">7. 五层递进，各一句话</a>
+<a href="#s8">8. 待办</a></nav>
+<p>已读的五篇，按它们<strong>互相接手</strong>的顺序整理。
+每一节的结构都是：<em>上一篇留下什么缺口 → 这篇怎么补 → 它自己又留下什么</em>。</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>论文</th>
+<th>总结</th>
+<th>链接</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Ng &amp; Russell, ICML 2000</td>
+<td>写下“专家最优”的线性不等式，发现解不唯一</td>
+<td><a href="https://dl.acm.org/doi/10.5555/645529.657801">ACM DL</a></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Abbeel &amp; Ng, ICML 2004</td>
+<td>不解 reward，改匹配 feature expectation</td>
+<td><a href="http://ai.stanford.edu/~pabbeel/irl/">Stanford 项目页</a></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Ziebart et al., AAAI 2008</td>
+<td>在满足匹配的<strong>分布</strong>里取最大熵</td>
+<td><a href="https://cdn.aaai.org/AAAI/2008/AAAI08-227.pdf">AAAI PDF</a></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Ziebart, Bagnell &amp; Dey, ICML 2010</td>
+<td>熵换成因果熵，修正随机环境下的偏差</td>
+<td><a href="https://dl.acm.org/doi/10.5555/3104322.3104481">ACM DL</a></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Finn, Levine &amp; Abbeel, ICML 2016</td>
+<td>用采样近似 $Z_\theta$，脱离 tabular</td>
+<td><a href="https://arxiv.org/abs/1603.00448">arXiv:1603.00448</a> · <a href="https://proceedings.mlr.press/v48/finn16.html">PMLR</a></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s0">0. 统一符号</h2>
+<p>五篇的记号各不相同，先对齐，后面才不会乱：</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>概念</th>
+<th>本文用</th>
+<th>各篇原本写成</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MDP</td>
+<td>$M=(S,A,P,\gamma,R)$</td>
+<td>一致</td>
+</tr>
+<tr>
+<td>转移矩阵</td>
+<td>$P_a\in\mathbb R^{\lvert S\rvert\times\lvert S\rvert}$，$(P_a)_{ss'}=P(s'\mid s,a)$</td>
+<td>Ng &amp; Russell 用 $\mathbf P_a$</td>
+</tr>
+<tr>
+<td>特征</td>
+<td>$\phi(s)\in\mathbb R^k$</td>
+<td>Abbeel &amp; Ng 用 $\phi$，Ziebart 用 $\mathbf f_s$</td>
+</tr>
+<tr>
+<td>轨迹</td>
+<td>$\tau=(s_0,a_0,s_1,\dots)$</td>
+<td>一致</td>
+</tr>
+<tr>
+<td>轨迹特征计数</td>
+<td>$f(\tau)=\sum_t\gamma^t\phi(s_t)$</td>
+<td>Ziebart 用 $\mathbf f_\tau$。<strong>注意</strong>：2004 带折扣 $\gamma^t$；2008 是有限视界<strong>无折扣</strong>的 $\sum_{s_t\in\tau}\phi(s_t)$（论文 eq. 1），下文 §3 用的即是后者</td>
+</tr>
+<tr>
+<td>特征期望</td>
+<td>$\mu(\pi)=\mathbb E_\pi[f(\tau)]$</td>
+<td>Abbeel &amp; Ng 的核心量</td>
+</tr>
+<tr>
+<td>示范的经验特征</td>
+<td>$\tilde f=\frac1m\sum_{i=1}^m f(\tau_i)$</td>
+<td>Ziebart 用 $\tilde{\mathbf f}$</td>
+</tr>
+<tr>
+<td>reward 参数</td>
+<td>$\theta$</td>
+<td>2000 直接用 $R$；2004 用 $w$；2016 用 <strong>cost</strong> $c_\theta$（符号相反）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>注意第 5 篇的符号翻转</strong>：前四篇最大化 reward，Finn 最小化 cost，
+所以那里的指数是 $\exp(-c_\theta)$ 而不是 $\exp(+\theta^\top f)$。看公式时要留意正负号。</p>
+<hr />
+<h2 id="s1">1. Ng &amp; Russell (2000)：得到的是一个锥，不是一个解</h2>
+<p><strong>问题设定</strong>：已知 MDP 的 $P$ 和 $\gamma$，已知专家策略 $\pi$（<strong>在每一个状态上</strong>），求 $R$。</p>
+<h3>1.1 最优性条件</h3>
+<p>不失一般性设 $\pi(s)\equiv a_1$。由 Bellman 方程</p>
+<p>$$V^\pi = R + \gamma P_{a_1}V^\pi \quad\Longrightarrow\quad V^\pi=(I-\gamma P_{a_1})^{-1}R$$</p>
+<p>而 $Q^\pi(s,a)=R(s)+\gamma\,(P_aV^\pi)(s)$。$\pi$ 最优的充要条件是对所有 $s$ 与 $a\neq a_1$：</p>
+<p>$$Q^\pi(s,a_1)\ \ge\ Q^\pi(s,a)
+\iff \gamma(P_{a_1}V^\pi)(s)\ \ge\ \gamma(P_aV^\pi)(s)$$</p>
+<p>两边的 $R(s)$ 抵消、$\gamma&gt;0$ 除掉，得到论文的核心不等式：</p>
+<p>$$\boxed{\ (P_{a_1}-P_a)\,(I-\gamma P_{a_1})^{-1}\,R\ \succeq\ 0\quad \forall a\in A\setminus\{a_1\}\ }\tag{$\star$}$$</p>
+<p>$R$ 在 $(\star)$ 里是<strong>线性且齐次</strong>的。三个直接后果：</p>
+<ol>
+<li>$R\equiv 0$ 满足每一条不等式——所有策略都最优，所以 $\pi$ 当然最优。<strong>退化解</strong>。</li>
+<li>$R$ 是解 $\Rightarrow$ $cR$（$c&gt;0$）也是解；解集对非负线性组合封闭。
+   所以 $(\star)$ 的解集是一个<strong>多面锥</strong>。</li>
+<li>于是 $(\star)$ 给出的是<strong>可行域</strong>，不是解。要拿到单一个 $R$，必须外加准则。</li>
+</ol>
+<h3>1.2 论文加的准则</h3>
+<p>$$\max_{R}\ \sum_{s\in S}\ \min_{a\in A\setminus\{a_1\}}\Big\{\big[(P_{a_1}-P_a)(I-\gamma P_{a_1})^{-1}R\big](s)\Big\}\ -\ \lambda\lVert R\rVert_1$$</p>
+<p>$$\text{s.t.}\quad (\star),\qquad \lvert R(s)\rvert\le R_{\max}$$</p>
+<ul>
+<li>第一项：把专家动作与<strong>次优</strong>动作的 $Q$ 差拉到最大 → 间隔最大化。</li>
+<li>第二项：偏好稀疏 / 简单的 reward。</li>
+</ul>
+<p>这两项都是<strong>选择</strong>，不是从问题推导出来的。换一个正则项就换一个答案。
+论文另外给了线性函数近似版 $R(s)=\sum_i\alpha_i\varphi_i(s)$，
+以及只用采样轨迹（不需要完整 $\pi$）的第三个算法——那是后面所有工作的种子。</p>
+<h3>1.3 留下的缺口</h3>
+<ul>
+<li><strong>(a)</strong> 需要<strong>完整的</strong> $\pi$。现实只有几条轨迹，没走过的状态完全不受约束。</li>
+<li><strong>(b)</strong> 假设专家严格最优。专家次优一点点，$(\star)$ 可能<strong>整组无解</strong>（LP infeasible）。</li>
+<li><strong>(c)</strong> 从锥里挑哪一点是任意的。</li>
+</ul>
+<p>→ (a) 由第 2 篇处理，(b)(c) 由第 3 篇处理。</p>
+<hr />
+<h2 id="s2">2. Abbeel &amp; Ng (2004)：把目标从 reward 换成 $\mu(\pi)$</h2>
+<p><strong>接手 (a)</strong>：只用轨迹，不需要完整策略。
+<strong>绕开 (c)</strong>：既然 reward 挑不准，那就别挑。</p>
+<h3>2.1 关键的一步：$V$ 对 $\mu$ 是线性的</h3>
+<p>假设 reward 对特征线性：$R(s)=w^\top\phi(s)$，$\lVert w\rVert_2\le1$，$\phi:S\to[0,1]^k$。则</p>
+<p>$$V^\pi(w)=\mathbb E\Big[\sum_{t=0}^\infty\gamma^t\,w^\top\phi(s_t)\ \Big|\ \pi\Big]
+= w^\top\underbrace{\mathbb E\Big[\sum_{t=0}^\infty\gamma^t\phi(s_t)\ \Big|\ \pi\Big]}_{\displaystyle \mu(\pi)\ \in\ \mathbb R^k}$$</p>
+<p>于是对<strong>任意</strong> $\lVert w\rVert_2\le1$：</p>
+<p>$$\big\lvert V^{\tilde\pi}(w)-V^{\pi_E}(w)\big\rvert
+=\big\lvert w^\top(\mu(\tilde\pi)-\mu_E)\big\rvert
+\ \le\ \lVert w\rVert_2\,\lVert\mu(\tilde\pi)-\mu_E\rVert_2
+\ \le\ \lVert\mu(\tilde\pi)-\mu_E\rVert_2$$</p>
+<p><strong>右边没有 $w$。</strong> 这一步把“我不知道真实 reward”整个绕开了：
+只要 $\lVert\mu(\tilde\pi)-\mu_E\rVert_2\le\epsilon$，
+$\tilde\pi$ 在<strong>所有</strong>线性 reward 下都不比专家差过 $\epsilon$。</p>
+<p>目标于是从“recover $R$”换成“match $\mu$”。</p>
+<p>经验估计（$m$ 条示范）：</p>
+<p>$$\hat\mu_E=\frac1m\sum_{i=1}^m\sum_{t=0}^{H}\gamma^t\phi\big(s_t^{(i)}\big)$$</p>
+<p>样本复杂度（Thm 2，论文 eq. 19 的精确形式）：</p>
+<p>$$m\ \ge\ \frac{2k}{(\epsilon(1-\gamma))^2}\,\log\frac{2k}{\delta}$$</p>
+<p>（对每个座标用 Hoeffding：$(1-\gamma)\hat\mu_i\in[0,1]$，再对 $k$ 个座标 union bound。）
+<strong>依赖 $k$ 而不是 $\lvert S\rvert$</strong>——
+这是它能离开 tabular 的原因。</p>
+<h3>2.2 max-margin 版：$w$ 就是分离方向</h3>
+<p>第 $i$ 轮解</p>
+<p>$$t^{(i)}=\max_{\lVert w\rVert_2\le1}\ \min_{j\in\{0,\dots,i-1\}}\ w^\top\big(\mu_E-\mu^{(j)}\big)$$</p>
+<p>这是一个标准 SVM：$\mu_E$ 当正例、已经产生过的 $\{\mu^{(j)}\}$ 当负例，
+$w^{(i)}$ 是<strong>分离超平面的法向量</strong>，$t^{(i)}$ 是<strong>间隔</strong>。
+然后用 $R=(w^{(i)})^\top\phi$ 解一次 MDP 得到 $\pi^{(i)}$，算出 $\mu^{(i)}=\mu(\pi^{(i)})$，进入下一轮。</p>
+<p>若 $t^{(i)}\le\epsilon$ 就停：此时<strong>没有任何</strong> $\lVert w\rVert\le1$ 能让专家比目前这组策略好过 $\epsilon$。</p>
+<h3>2.3 projection 版：奖励权重 = 残差方向</h3>
+<p>不需要 QP solver 的等价写法。令 $\bar\mu^{(0)}=\mu^{(0)}$，第 $i$ 轮：</p>
+<p>$$\bar\mu^{(i)}=\bar\mu^{(i-1)}
++\frac{\big(\mu^{(i)}-\bar\mu^{(i-1)}\big)^\top\big(\mu_E-\bar\mu^{(i-1)}\big)}
+{\big(\mu^{(i)}-\bar\mu^{(i-1)}\big)^\top\big(\mu^{(i)}-\bar\mu^{(i-1)}\big)}
+\Big(\mu^{(i)}-\bar\mu^{(i-1)}\Big)$$</p>
+<p>$$w^{(i+1)}=\mu_E-\bar\mu^{(i)},\qquad t^{(i+1)}=\big\lVert\mu_E-\bar\mu^{(i)}\big\rVert_2$$</p>
+<p>第一式就是把 $\mu_E$ 正交投影到线段 $\overline{\bar\mu^{(i-1)}\,\mu^{(i)}}$ 上。
+几何上 $\bar\mu^{(i)}$ 逐步逼近 $\mu_E$ 在 $\operatorname{conv}\{\mu^{(j)}\}$ 上的投影，而</p>
+<blockquote>
+<p><strong>$w$ 是从凸包指向 $\mu_E$ 的残差向量。</strong>
+“reward 权重”和“分离方向”是同一个东西——这是这篇最漂亮的一点。</p>
+</blockquote>
+<p>残差方向指出“专家在哪个特征维度上比目前所有策略都强”，
+把它当 reward 去解 MDP，就是去补上那个维度。这是 Frank–Wolfe 式的贪婪逼近，
+所以间隔以 $t^{(i)}=O(1/\sqrt i)$ 的速率下降，
+迭代次数 $n=O\!\big(\tfrac{k}{(1-\gamma)^2\epsilon^2}\log\tfrac{k}{(1-\gamma)\epsilon}\big)$。</p>
+<p>已对照论文核实（2026-08-28，对照 <code>paper/基础文献/2004_Abbeel_Apprenticeship_Learning.pdf</code>）：</p>
+<p>$$\text{Thm 1:}\quad n=O\!\left(\frac{k}{(1-\gamma)^2\epsilon^2}\,\log\frac{k}{(1-\gamma)\epsilon}\right)
+\qquad\text{Thm 2:}\quad m\ \ge\ \frac{2k}{(\epsilon(1-\gamma))^2}\,\log\frac{2k}{\delta}$$</p>
+<p>论文还给了一条容错结果：若真实 reward 不在 $\phi$ 的张成里、残差为 $\varepsilon(s)$，
+性能退化以 $\lVert\varepsilon\rVert$ 的量级优雅衰减（graceful degradation），
+这正是 §2.5 缺口 (d) 的定量版本。</p>
+<h3>2.4 为什么输出是混合策略</h3>
+<p>$\mu_E$ 一般<strong>不等于</strong>任何单一 $\mu(\pi^{(j)})$，但会落在 $\operatorname{conv}\{\mu^{(j)}\}$ 里。
+而 $\mu$ 对“策略的混合”是线性的：</p>
+<p>$$\mu\Big(\textstyle\sum_j\lambda_j\pi^{(j)}\Big)=\sum_j\lambda_j\,\mu\big(\pi^{(j)}\big)$$</p>
+<p>所以算法返回的是一组 $\{\lambda_j\}$：<strong>开局掷一次骰子选出 $\pi^{(j)}$，然后整局照它走。</strong>
+注意这是“每局随机”，不是“每步随机”——实际中很尴尬。</p>
+<h3>2.5 留下的缺口</h3>
+<ul>
+<li><strong>(d)</strong> 只保证“表现一样好”，<strong>拿不到</strong> reward。想转移到新环境就没东西可转移。</li>
+<li><strong>(e)</strong> 混合策略的形式不自然。</li>
+<li><strong>(f)</strong> 满足 $\mu$ 匹配的策略<strong>依然有无穷多个</strong>（不同策略可以有相同的 $\mu$）。该挑哪一个？</li>
+</ul>
+<p>→ (f) 正是第 3 篇的入口。</p>
+<hr />
+<h2 id="s3">3. Ziebart et al. (2008)：从“挑一个策略”到“学一个分布”</h2>
+<p><strong>接手 (f)</strong>，顺带处理 (b)（专家次优）与 (c)（挑选准则的任意性）。</p>
+<h3>3.1 最大熵原理</h3>
+<p>不再问“挑哪个策略”，改问“<strong>挑哪个轨迹分布</strong>”。在特征匹配的约束下求熵最大：</p>
+<p>$$\max_{P}\ \ H(P)=-\sum_\tau P(\tau)\log P(\tau)$$</p>
+<p>$$\text{s.t.}\quad \sum_\tau P(\tau)f(\tau)=\tilde f,\qquad \sum_\tau P(\tau)=1,\qquad P(\tau)\ge0$$</p>
+<p>Lagrangian（$\theta$ 对应特征约束，$\eta$ 对应归一化）：</p>
+<p>$$\mathcal L=-\sum_\tau P\log P+\theta^\top\Big(\sum_\tau P\,f(\tau)-\tilde f\Big)+\eta\Big(\sum_\tau P-1\Big)$$</p>
+<p>$$\frac{\partial\mathcal L}{\partial P(\tau)}=-\log P(\tau)-1+\theta^\top f(\tau)+\eta=0$$</p>
+<p>$$\Longrightarrow\quad\boxed{\ P(\tau\mid\theta)=\frac{1}{Z(\theta)}\exp\big(\theta^\top f(\tau)\big),\qquad
+Z(\theta)=\sum_\tau\exp\big(\theta^\top f(\tau)\big)\ }$$</p>
+<p><strong>指数族。</strong> 而 $\theta^\top f(\tau)=\sum_t\theta^\top\phi(s_t)$ 就是这条轨迹的总 reward，所以模型在说：</p>
+<blockquote>
+<p>reward 高的轨迹<strong>指数级</strong>地更可能被走，但不是绝对地被走。</p>
+</blockquote>
+<p>专家次优不再让问题无解，只是让那条轨迹的似然低一点——缺口 (b) 自动消失。</p>
+<h3>3.2 对偶：最大熵 = 极大似然</h3>
+<p>约束最大熵问题的对偶，恰好是在这个指数族上做 MLE：</p>
+<p>$$L(\theta)=\frac1m\sum_{\tau_i\in D}\log P(\tau_i\mid\theta)=\theta^\top\tilde f-\log Z(\theta)$$</p>
+<p>$$\nabla_\theta L=\tilde f-\frac{\nabla_\theta Z(\theta)}{Z(\theta)}
+=\tilde f-\sum_\tau P(\tau\mid\theta)f(\tau)
+=\tilde f-\mathbb E_{P_\theta}\big[f(\tau)\big]$$</p>
+<p>写成状态层级（$f(\tau)=\sum_t\phi(s_t)$）：</p>
+<p>$$\boxed{\ \nabla_\theta L=\tilde f-\sum_{s}D_s\,\phi(s)\ }$$</p>
+<p>其中 $D_s$ 是<strong>期望状态访问频率</strong>（expected state visitation frequency）。</p>
+<p>“<strong>观察值 − 模型期望值</strong>”——所有指数族模型共通的梯度形式。</p>
+<p>二阶导：</p>
+<p>$$\nabla^2_\theta L=-\operatorname{Cov}_{P_\theta}\big[f(\tau)\big]\ \preceq\ 0$$</p>
+<p>所以 $L$ 是<strong>凹的</strong>，梯度上升收敛到全局最优。缺口 (c) 也消失了：
+解唯一，而且“最大熵”这个准则有原理上的理由（不引入示范没告诉你的偏好），
+不像 2000 的 $\ell_1$ 那样纯属选择。</p>
+<h3>3.3 怎么算 $D_s$（Algorithm 1）</h3>
+<p>贵的是 $\mathbb E_{P_\theta}[f]$。论文用一组 backward–forward 递推：</p>
+<p><strong>backward（算局部 partition）</strong>。论文原文：初始化 $Z_{s}=1$（对所有状态），迭代 $N$ 次</p>
+<p>$$Z_{s,a}\ \leftarrow\ \sum_{s'}P(s'\mid s,a)\ e^{\theta^\top\phi(s)}\ Z_{s'},
+\qquad Z_s\ \leftarrow\ \sum_a Z_{s,a}$$</p>
+<p>（很多课程讲义写成“只在 terminal 状态置 1”的吸收态变体；论文本身是全 1 初始化 + 固定 $N$ 次迭代，
+两者在有吸收目标、视界足够长时一致。）</p>
+<p><strong>局部动作概率</strong>：</p>
+<p>$$\pi_\theta(a\mid s)=\frac{Z_{s,a}}{Z_s}$$</p>
+<p><strong>forward（算访问频率）</strong>：</p>
+<p>$$D_{s,0}=d_0(s),\qquad
+D_{s',t+1}=\sum_{s}\sum_a D_{s,t}\ \pi_\theta(a\mid s)\ P(s'\mid s,a),\qquad
+D_s=\sum_{t=0}^{H}D_{s,t}$$</p>
+<blockquote class="warn">
+<p>⚠️ <strong>论文原文的 forward pass 印刷有误</strong>（AAAI 2008 版 Algorithm 1 第 5 步）：
+$D_{s_i,t+1}=\sum_{a_{i,j}}\sum_k D_{s_k,t}P(a_{i,j}\mid s_i)P(s_k\mid a_{i,j},s_i)$ ——
+下标 $i,k$ 自相矛盾（右边是从 $s_i$ 出发的转移，却用来更新 $s_i$ 自己）。
+上面写的是守恒的正确版本；实现时用 $\sum_s D_{s,t}=1$（每步）或 $\sum_s D_s=H$ 当检查，
+这条守恒律恰好就能抓出这类下标错误。</p>
+</blockquote>
+<h3>3.4 概念上的跃迁</h3>
+<p>这篇真正的贡献不是算法，是<strong>问题的重新表述</strong>：</p>
+<blockquote>
+<p>IRL 从“找一个 reward / 一个策略”变成“<strong>学一个轨迹上的概率分布</strong>”，
+$\theta$ 是这个分布的自然参数。</p>
+</blockquote>
+<p>一旦写成指数族，整套概率建模的工具（MLE、凸性、对偶、图模型推论）就全部可以用了。
+后面三篇都建立在这个表述上。</p>
+<h3>3.5 留下的缺口</h3>
+<ul>
+<li><strong>(g)</strong> $Z(\theta)=\sum_\tau(\cdot)$ 要遍历所有轨迹 → 只在 tabular + 有限 horizon 下算得动。</li>
+<li><strong>(h)</strong> <strong>随机 dynamics 下这个模型是错的。</strong> → 第 4 篇。</li>
+</ul>
+<hr />
+<h2 id="s4">4. Ziebart, Bagnell &amp; Dey (2010)：因果熵</h2>
+<p><strong>接手 (h)。</strong></p>
+<h3>4.1 错在哪</h3>
+<p>$P(\tau)\propto\exp(\theta^\top f(\tau))$ 对<strong>整条轨迹</strong>赋概率。
+但轨迹里有两种东西：agent 选的动作 $a_t$，以及环境掷骰子决定的转移结果 $s_{t+1}$。
+把两者一起丢进 $\exp$ 里归一化，等于让模型<strong>替 agent 挑选环境的随机结果</strong>——
+agent 被赋予了它并不具有的控制力，于是模型系统性地<strong>高估</strong>了 agent 对结果的掌控（乐观 / risk-seeking 偏差）。</p>
+<p>看 backup 最清楚。轨迹级最大熵在随机 dynamics 下导出的递推是</p>
+<p>$$V(s)=\log\sum_a\exp\Big(\theta^\top\phi(s)+\underbrace{\log\ \mathbb E_{s'\sim P(\cdot\mid s,a)}\big[e^{V(s')}\big]}_{\text{soft-max over } s'}\Big)$$</p>
+<p>里面那个 $\log\mathbb E[e^{V}]$ 会把<strong>运气好的后继状态</strong>加权得过高。</p>
+<h3>4.2 因果熵</h3>
+<p>修法：限制策略只能依赖<strong>已经发生</strong>的信息。定义因果条件概率</p>
+<p>$$P\big(a_{1:T}\,\big\|\,s_{1:T}\big):=\prod_{t=1}^{T}P\big(a_t\ \big|\ s_{1:t},\,a_{1:t-1}\big)$$</p>
+<p>注意 $a_t$ 只条件在 $s_{1:t}$ 上，<strong>看不到未来的</strong> $s_{t+1:T}$。对应的因果熵：</p>
+<p>$$H\big(A^T\,\big\|\,S^T\big)=\mathbb E\Big[-\log P\big(A^T\big\|S^T\big)\Big]
+=\sum_{t=1}^{T}H\big(A_t\ \big|\ S_{1:t},A_{1:t-1}\big)$$</p>
+<p>最大化因果熵、约束仍是特征匹配，且 dynamics $P$ 固定不可优化。解得 <strong>soft Bellman recursion</strong>：</p>
+<p>$$Q^{\text{soft}}_\theta(s,a)=\theta^\top\phi(s,a)+\mathbb E_{s'\sim P(\cdot\mid s,a)}\big[V^{\text{soft}}_\theta(s')\big]$$</p>
+<p>$$V^{\text{soft}}_\theta(s)=\operatorname*{softmax}_a Q^{\text{soft}}_\theta(s,a)=\log\sum_a\exp Q^{\text{soft}}_\theta(s,a)$$</p>
+<p>$$\pi_\theta(a\mid s)=\exp\Big(Q^{\text{soft}}_\theta(s,a)-V^{\text{soft}}_\theta(s)\Big)$$</p>
+<h3>4.3 整篇的差别就是这张表</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th></th>
+<th>对动作 $a$</th>
+<th>对后继状态 $s'$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2008（轨迹级最大熵）</td>
+<td>$\log\sum_a\exp(\cdot)$</td>
+<td>$\log\mathbb E_{s'}\big[e^{(\cdot)}\big]$ ← <strong>错</strong></td>
+</tr>
+<tr>
+<td>2010（因果熵）</td>
+<td>$\log\sum_a\exp(\cdot)$</td>
+<td>$\mathbb E_{s'}\big[(\cdot)\big]$ ← <strong>对</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>动作上仍然是 softmax（agent 确实在选动作），
+但转移上必须是<strong>普通期望</strong>（agent 不能选环境）。</p>
+<p><strong>确定性 dynamics 下两者重合</strong>——所以 2008 在确定性环境里是对的，
+它的问题只在随机环境浮现。</p>
+<p>梯度形式完全没变：</p>
+<p>$$\nabla_\theta L=\tilde f-\mathbb E_{\pi_\theta,\,P}\big[f\big]$$</p>
+<p>右边改用 $\pi_\theta$ 配<strong>真实</strong> $P$ 做前向传播算出来。</p>
+<h3>4.4 留下的缺口</h3>
+<ul>
+<li><strong>(i)</strong> 仍然是 tabular + 已知 dynamics + 线性 reward。三个限制一个都没松。</li>
+</ul>
+<hr />
+<h2 id="s5">5. Finn, Levine &amp; Abbeel (2016)：采样近似 $Z_\theta$</h2>
+<p><strong>接手 (i) 的全部三条。</strong></p>
+<h3>5.1 设定（注意符号翻转为 cost）</h3>
+<p>$c_\theta(\tau)$ 是神经网络，$\tau$ 在连续高维空间。能量模型：</p>
+<p>$$p_\theta(\tau)=\frac{1}{Z_\theta}\exp\big(-c_\theta(\tau)\big),\qquad
+Z_\theta=\int\exp\big(-c_\theta(\tau)\big)\,\mathrm d\tau$$</p>
+<p>负对数似然：</p>
+<p>$$\mathcal L(\theta)=-\frac1N\sum_{\tau_i\in\mathcal D_{\text{demo}}}\log p_\theta(\tau_i)
+=\frac1N\sum_{i}c_\theta(\tau_i)+\log Z_\theta$$</p>
+<p>$$\nabla_\theta\mathcal L=\underbrace{\frac1N\sum_i\nabla_\theta c_\theta(\tau_i)}_{\text{demo}}
+-\underbrace{\mathbb E_{\tau\sim p_\theta}\big[\nabla_\theta c_\theta(\tau)\big]}_{\text{model}}$$</p>
+<p><strong>还是同一个梯度</strong>（示范 − 模型期望），只是 reward 换成 cost 所以正负号翻了。
+问题完全集中在第二项：$p_\theta$ 采样不了，$Z_\theta$ 是高维积分。</p>
+<h3>5.2 importance sampling</h3>
+<p>引入一个<strong>能采样</strong>的分布 $q(\tau)$：</p>
+<p>$$Z_\theta=\int q(\tau)\,\frac{e^{-c_\theta(\tau)}}{q(\tau)}\,\mathrm d\tau
+\ \approx\ \frac1M\sum_{\tau_j\sim q}w_j,
+\qquad w_j:=\frac{e^{-c_\theta(\tau_j)}}{q(\tau_j)}$$</p>
+<p>模型期望项用自归一化的 IS 估计：</p>
+<p>$$\mathbb E_{p_\theta}\big[\nabla_\theta c_\theta\big]\ \approx\
+\frac{\sum_j w_j\,\nabla_\theta c_\theta(\tau_j)}{\sum_j w_j}$$</p>
+<h3>5.3 $q$ 该选什么——关键的那一步</h3>
+<p>IS 的方差在 $q\propto e^{-c_\theta}$（也就是 $q=p_\theta$）时最小。而</p>
+<p>$$\operatorname{KL}\big(q\,\|\,p_\theta\big)
+=\mathbb E_q\big[c_\theta(\tau)\big]-\mathcal H(q)+\log Z_\theta$$</p>
+<p>$\log Z_\theta$ 与 $q$ 无关，所以“让 $q$ 靠近 $p_\theta$”等价于</p>
+<p>$$\min_q\ \ \mathbb E_q\big[c_\theta(\tau)\big]-\mathcal H(q)$$</p>
+<p><strong>这恰好是一个最大熵 RL 问题</strong>（最小化 cost + 最大化熵）。于是：</p>
+<blockquote>
+<p>“近似 partition function”与“用当前 cost 训练一个策略”是<strong>同一件事</strong>。</p>
+</blockquote>
+<p>这就是 guided cost learning 的名字由来，也是它跳出 tabular 的方式：
+不再枚举轨迹，而是<strong>训练一个策略去产生轨迹</strong>。</p>
+<h3>5.4 算法</h3>
+<p>交替两步：</p>
+<ol>
+<li>用当前的 $c_\theta$ 跑若干步 MaxEnt policy optimization，更新 $q$；</li>
+<li>从 $q$ 采样，配合示范，用 5.2 的 IS 梯度更新 $\theta$。</li>
+</ol>
+<p><strong>实现上的两个要点</strong>：</p>
+<ul>
+<li>proposal 用<strong>混合分布</strong>而不是纯 $q$：</li>
+</ul>
+<p>$$\mu(\tau)=\tfrac12\,q(\tau)+\tfrac12\,\hat p_{\text{demo}}(\tau),
+  \qquad w_j=\frac{e^{-c_\theta(\tau_j)}}{\mu(\tau_j)}$$</p>
+<p>因为训练早期的 $q$ 几乎覆盖不到示范所在的区域，纯 $q$ 会让权重爆炸。</p>
+<ul>
+<li>cost 是神经网络 → 必须加正则，否则会退化成无意义的解。论文 §5 的两个正则项（对轨迹 $\tau$ 上的状态 $x_t$）：</li>
+</ul>
+<p>$$g_{\text{lcr}}(\tau)=\sum_{x_t\in\tau}\big[(c_\theta(x_{t+1})-c_\theta(x_t))-(c_\theta(x_t)-c_\theta(x_{t-1}))\big]^2$$</p>
+<p>惩罚 cost 的二阶时间差分（“局部匀速”），通用；</p>
+<p>$$g_{\text{mono}}(\tau)=\sum_{x_t\in\tau}\big[\max\big(0,\ c_\theta(x_t)-c_\theta(x_{t-1})-1\big)\big]^2$$</p>
+<p>squared hinge，要求示范的 cost 随时间单调下降，只适用于“到达目标”类的 episodic 任务。</p>
+<h3>5.5 留下的缺口 / 接下来</h3>
+<ul>
+<li>$q$ 与 $c_\theta$ 的交替，形式上就是 <strong>generator vs. discriminator</strong> → GAIL / AIRL（还没读）。</li>
+<li>三个限制松开了，但 <strong>reward 的可辨识性问题一点都没碰</strong>——
+  这条线从 2000 到 2016 一直悬著。</li>
+</ul>
+<hr />
+<h2 id="s6">6. 贯穿五篇的那一个梯度</h2>
+<p>从 2008 开始，三篇的梯度<strong>完全是同一条</strong>：</p>
+<p>$$\boxed{\ \nabla_\theta=\underbrace{\tilde f}_{\text{demo}}\ -\ \underbrace{\mathbb E_{\text{model}(\theta)}\big[f\big]}_{\text{model}(\theta)}\ }$$</p>
+<p>变的只有<strong>右边那一项怎么算</strong>：</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>论文</th>
+<th>模型期望项的算法</th>
+<th>适用范围</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ziebart 2008</td>
+<td>backward–forward 动态规划</td>
+<td>tabular，确定性 dynamics</td>
+</tr>
+<tr>
+<td>Ziebart 2010</td>
+<td>soft Bellman + 前向传播</td>
+<td>tabular，<strong>随机</strong> dynamics</td>
+</tr>
+<tr>
+<td>Finn 2016</td>
+<td>importance sampling，proposal 由 MaxEnt RL 训练</td>
+<td>连续高维，<strong>未知</strong> dynamics</td>
+</tr>
+</tbody>
+</table></div>
+<p>而 2000 与 2004 是这条梯度的前史：
+2000 给出<strong>可行域</strong>（但没有目标函数），
+2004 给出<strong>该匹配什么</strong>（$\mu$，但只当成几何逼近），
+2008 才把“匹配 $\mu$”变成一个概率模型的 MLE，于是有了梯度。</p>
+<h2 id="s7">7. 五层递进，各一句话</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>层</th>
+<th>论文</th>
+<th>这一层做的事</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Ng &amp; Russell 2000</td>
+<td>写下“专家最优”的线性不等式 $(\star)$ → 得到一个<strong>锥</strong>，不是一个解</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Abbeel &amp; Ng 2004</td>
+<td>不解 reward，改让 $\mu(\pi)$ 对上 → <strong>绕开</strong>不唯一性，代价是只得到混合策略、拿不到 reward</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Ziebart 2008</td>
+<td>在满足 $\mu$ 匹配的<strong>分布</strong>里取最大熵 → 唯一解，且是指数族 MLE，凸问题</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Ziebart 2010</td>
+<td>熵 → 因果熵 → 修正随机环境下的乐观偏差，得到 soft Bellman</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Finn 2016</td>
+<td>$Z_\theta$ 用 IS 近似，proposal 用 MaxEnt RL 训练 → 脱离 tabular / 已知 dynamics / 线性 reward</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s8">8. 待办</h2>
+<p><strong>回去核对</strong>（2026-08-28 已对照 <code>paper/基础文献/</code> 的 PDF 核完）</p>
+<ul>
+<li>[x] Abbeel &amp; Ng 的两个 bound 确切常数 → 已补进 §2.3</li>
+<li>[x] Finn 2016 的正则项（lcr、单调性）具体形式 → 已补进 §5.4</li>
+<li>[x] Ziebart 2010 的证明结构：原文 Thm（eq. 5–6）是“凸原问题 + 拉格朗日 + 强对偶”，
+      对 $P(A\|S)$ 求导置零得 $P_\theta(A_t\mid S_t)\propto\exp\{\theta^\top\mathbb E[F]-\sum_{\tau&gt;t}\mathbb E[\log P_\theta]\}$，
+      再代入递归式验证。完整的逐步推导仍值得自己手写一遍：</li>
+<li>[ ] 手推 Ziebart 2010 eq. 4 → eq. 5 的完整拉格朗日（读懂证明骨架 ≠ 自己推得出来）</li>
+<li>[ ] 发现的新问题：AAAI 2008 原文 Algorithm 1 forward pass 的下标印刷有误（见 §3.3）——
+      去查一下 Ziebart 2010 博士论文里的版本是否已修正</li>
+</ul>
+<p><strong>五篇留下的、还没读到答案的</strong></p>
+<ul>
+<li>[ ] reward 的不可辨识性：五篇全都绕开了它，没有一篇正面处理
+      → Ng, Harada &amp; Russell (1999) 的 potential-based shaping 是起点</li>
+<li>[ ] $q$ vs. $c_\theta$ 的交替和 GAN 的关系 → GAIL / AIRL</li>
+<li>[ ] 多方情境：这五篇都是单 agent，接到 inverse game theory 要换什么</li>
+</ul>
+</main>
+<script>
+window.MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
+</body>
+</html>

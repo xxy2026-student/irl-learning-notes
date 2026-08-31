@@ -16,3 +16,4 @@ Classical IRL → Feature Matching → Maximum Entropy IRL → Maximum Causal En
 4. [Generative Policies for RL](前沿文献/04_Generative_Policies_for_RL/)
 5. [Flow Matching for RL](前沿文献/05_Flow_Matching_for_RL/)
 6. [Latent / Switching Reward IRL](前沿文献/06_Latent与Switching_Reward_IRL/)
+7. [IRL & LLM Alignment](前沿文献/07_IRL与LLM对齐/)（综述导读：[notes/2025_Sun_IRL_meets_LLM_Survey.md](../notes/2025_Sun_IRL_meets_LLM_Survey.md)）

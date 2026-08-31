@@ -8,6 +8,7 @@ PDF 待下载（本目录建立时所在环境无法访问 arXiv/Springer），�
 
 | Year | 范围 | Paper | Venue | 链接 | 导读 |
 | --- | --- | --- | --- | --- | --- |
+| 2026 | **通用·本仓库自撰** | 逆强化学习综述(2000–2026):从一个奖励,到一族奖励 | 本仓库 | [survey/README.md](../../survey/README.md) | 即正文 |
 | 2021 | **通用·主参考** | A Survey of Inverse Reinforcement Learning: Challenges, Methods and Progress（Arora & Doshi） | Artificial Intelligence 297:103500 | [arXiv:1806.06877](https://arxiv.org/abs/1806.06877) | [notes](../../notes/2021_Arora_Doshi_IRL_Survey.md) |
 | 2022 | 通用·deep 时代重述 | A Survey of Inverse Reinforcement Learning（Adams, Cody & Beling） | Artif. Intell. Review 55:4307–4346 | [DOI](https://doi.org/10.1007/s10462-021-10108-x) | —— |
 | 2025 | 通用·应用导向（最新） | Advances and Applications in Inverse Reinforcement Learning: A Comprehensive Review | Neural Comput. & Applic. 37:11071–11123 | [DOI](https://doi.org/10.1007/s00521-025-11100-0)（付费墙） | —— |

@@ -2,6 +2,10 @@
 
 IRL 阅读库。PDF 均为会议 proceedings、OpenReview、arXiv 或作者主页的公开版本。
 
+## 综述
+
+[综述书架](综述/)（主参考 Arora & Doshi 2021 的精读导读：[notes/2021_Arora_Doshi_IRL_Survey.md](../notes/2021_Arora_Doshi_IRL_Survey.md)）
+
 ## 基础文献
 
 [基础文献](基础文献/)

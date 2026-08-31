@@ -13,7 +13,7 @@
 
 | 定位 | 综述 | 出处 | 适合什么时候读 |
 |---|---|---|---|
-| 通用·经典 | Arora & Doshi, *A survey of IRL: Challenges, methods and progress* | AIJ 2021 ([1806.06877](https://arxiv.org/abs/1806.06877)) | 方法学分类最全，但**基础五篇已覆盖其主干**，可当索引 |
+| 通用·经典 | Arora & Doshi, *A survey of IRL: Challenges, methods and progress* | AIJ 2021 ([1806.06877](https://arxiv.org/abs/1806.06877)) | **通用综述的主参考**，精读导读见 [2021_Arora_Doshi_IRL_Survey.md](2021_Arora_Doshi_IRL_Survey.md) |
 | 通用·深度方法 | Adams, Cody & Beling, *A survey of IRL* | [Artif. Intell. Review 2022](https://dl.acm.org/doi/10.1007/s10462-021-10108-x) | 想补 deep IRL 工程细节时 |
 | 子方向·学约束 | Liu et al., *A Comprehensive Survey on Inverse Constrained RL* | TMLR 2025 ([2409.07569](https://arxiv.org/abs/2409.07569)) | 读完 `01_Offline_IRL` 后想看"反推约束而非 reward" |
 | 邻域·正向 reward | *Reward Models in Deep RL: A Survey* | IJCAI 2025 ([2506.15421](https://arxiv.org/abs/2506.15421)) | 对照：forward RL 里 reward 怎么设计 |

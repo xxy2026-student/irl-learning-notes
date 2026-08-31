@@ -75,7 +75,7 @@
 
 Ng & Russell ☆ 写下专家最优的充要不等式(设 $\pi_E(s)\equiv a_1$):
 
-$$(P_{a_1}-P_a)\,(I-\gamma P_{a_1})^{-1}R\ \succeq\ 0,\qquad \forall a\neq a_1 \tag{$\star$}$$
+$$(P_{a_1}-P_a)\,(I-\gamma P_{a_1})^{-1}R\ \succeq\ 0,\qquad \forall a\neq a_1 \tag{\star}$$
 
 解集是含 $R\equiv 0$ 的多面锥:线性齐次约束给出**可行域**而非解。
 此后每一族方法都可读作"往锥里加一个选择准则"(§3),

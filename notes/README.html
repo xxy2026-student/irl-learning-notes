@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IRL 五篇精读</title>
+<title>五篇论文的一条线：从“反推 reward”到“学一个轨迹分布”</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
 <style>
 :root{
@@ -179,7 +179,7 @@ li{margin:.3em 0}
 <p>$$Q^\pi(s,a_1)\ \ge\ Q^\pi(s,a)
 \iff \gamma(P_{a_1}V^\pi)(s)\ \ge\ \gamma(P_aV^\pi)(s)$$</p>
 <p>两边的 $R(s)$ 抵消、$\gamma&gt;0$ 除掉，得到论文的核心不等式：</p>
-<p>$$\boxed{\ (P_{a_1}-P_a)\,(I-\gamma P_{a_1})^{-1}\,R\ \succeq\ 0\quad \forall a\in A\setminus\{a_1\}\ }\tag{$\star$}$$</p>
+<p>$$\boxed{\ (P_{a_1}-P_a)\,(I-\gamma P_{a_1})^{-1}\,R\ \succeq\ 0\quad \forall a\in A\setminus\{a_1\}\ }\tag{\star}$$</p>
 <p>$R$ 在 $(\star)$ 里是<strong>线性且齐次</strong>的。三个直接后果：</p>
 <ol>
 <li>$R\equiv 0$ 满足每一条不等式——所有策略都最优，所以 $\pi$ 当然最优。<strong>退化解</strong>。</li>

@@ -50,7 +50,7 @@ $$Q^\pi(s,a_1)\ \ge\ Q^\pi(s,a)
 
 两边的 $R(s)$ 抵消、$\gamma>0$ 除掉，得到论文的核心不等式：
 
-$$\boxed{\ (P_{a_1}-P_a)\,(I-\gamma P_{a_1})^{-1}\,R\ \succeq\ 0\quad \forall a\in A\setminus\{a_1\}\ }\tag{$\star$}$$
+$$\boxed{\ (P_{a_1}-P_a)\,(I-\gamma P_{a_1})^{-1}\,R\ \succeq\ 0\quad \forall a\in A\setminus\{a_1\}\ }\tag{\star}$$
 
 $R$ 在 $(\star)$ 里是**线性且齐次**的。三个直接后果：
 

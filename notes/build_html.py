@@ -1,29 +1,33 @@
-"""把 README.md 渲染成可直接在浏览器打开的 README.html。
+"""把 markdown 笔记渲染成可直接在浏览器打开的 .html。
 
-    python notes/build_html.py
+    python notes/build_html.py                    # 默认编译 notes/README.md
+    python notes/build_html.py survey/README.md   # 也可编译仓库里任意 .md
 
+输出写在源文件旁边（同名 .html）。
 数学公式用 MathJax（SVG 输出，颜色随明暗主题走）。
 转换前先把 $...$ / $$...$$ 摘出来占位，防止 markdown 把
 数学里的下划线当斜体、把表格里的竖线当分栏；转完再回填。
+读写一律显式 UTF-8——不要依赖系统默认编码（Windows 默认 GBK，
+读 UTF-8 源文件或写声明了 charset=utf-8 的 HTML 都会变成乱码）。
 依赖：pip install markdown
 """
 
 import html
 import pathlib
 import re
+import sys
 
 import markdown
 
 HERE = pathlib.Path(__file__).parent
-SRC = HERE / "README.md"
-OUT = HERE / "README.html"
+REPO = HERE.parent
 
 SHELL = """<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IRL 五篇精读</title>
+<title>__TITLE__</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
 <style>
 :root{
@@ -76,8 +80,8 @@ li{margin:.3em 0}
 <body>
 <main>
 <header class="doc">
-  <div class="eyebrow">irl-learning-notes / notes</div>
-  <h1>__TITLE__</h1>
+  <div class="eyebrow">__EYEBROW__</div>
+  <h1>__H1__</h1>
   <div class="meta">__META__</div>
 </header>
 <nav class="toc">__TOC__</nav>
@@ -92,8 +96,9 @@ window.MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{font
 """
 
 
-def build():
-    src = SRC.read_text()
+def build(src_path: pathlib.Path):
+    out_path = src_path.with_suffix(".html")
+    src = src_path.read_text(encoding="utf-8")
 
     # 1. 摘出数学，占位保护（纯字母数字占位符，markdown 不会动它）
     store = []
@@ -118,7 +123,9 @@ def build():
 
     # 4. 结构后处理
     title_m = re.search(r"<h1>(.*?)</h1>", body)
-    title = title_m.group(1) if title_m else SRC.name
+    h1 = title_m.group(1) if title_m else src_path.name
+    title = re.sub(r"<[^>]+>", "", h1)
+    title = re.sub(r"\$[^$]*\$", "", title).strip() or src_path.name
     body = re.sub(r"<h1>.*?</h1>\s*", "", body, count=1)
 
     secs = []
@@ -135,17 +142,26 @@ def build():
     body = re.sub(r"<table>", '<div class="tw"><table>', body)
     body = re.sub(r"</table>", "</table></div>", body)
 
+    try:
+        rel_dir = src_path.resolve().parent.relative_to(REPO.resolve())
+        eyebrow = f"irl-learning-notes / {rel_dir}".rstrip("/. ")
+    except ValueError:
+        eyebrow = "irl-learning-notes"
     toc = "\n".join(f'<a href="#{i}">{t}</a>' for i, t in secs)
-    meta = f"由 <code>build_html.py</code> 从 <code>{SRC.name}</code> 生成 —— 改笔记后重跑一次即可同步"
+    meta = f"由 <code>build_html.py</code> 从 <code>{src_path.name}</code> 生成 —— 改笔记后重跑一次即可同步"
     page = (
         SHELL.replace("__TITLE__", title)
+        .replace("__EYEBROW__", eyebrow)
+        .replace("__H1__", h1)
         .replace("__META__", meta)
         .replace("__TOC__", toc)
         .replace("__BODY__", body)
     )
-    OUT.write_text(page)
-    print(f"{OUT.name}: {len(page) / 1024:.0f} KB, {len(store)} 个公式, {len(secs)} 节")
+    out_path.write_text(page, encoding="utf-8")
+    print(f"{out_path}: {len(page) / 1024:.0f} KB, {len(store)} 个公式, {len(secs)} 节")
 
 
 if __name__ == "__main__":
-    build()
+    targets = [pathlib.Path(p) for p in sys.argv[1:]] or [HERE / "README.md"]
+    for t in targets:
+        build(t)
